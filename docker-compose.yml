@@ -8,6 +8,7 @@ services:
         GUARDRAILS_TOKEN: ${GUARDRAILS_TOKEN}
         OPENAI_API_KEY: ${OPENAI_API_KEY}
     environment:
+      - COLLECTOR_ENDPOINT=http://phoenix:6006/v1/traces  # Endpoint for tracing data, used by Phoenix
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - GUARDRAILS_TOKEN=${GUARDRAILS_TOKEN}
     # Map port 8080 of the container to port 8080 on the host
@@ -25,3 +26,18 @@ services:
       interval: 3s
       timeout: 1s
       retries: 3
+    depends_on:
+      # Ensure that the Phoenix service is started before the Streamlit app
+      - phoenix
+
+  # Define the Phoenix service for tracing and monitoring
+  phoenix:
+    image: arizephoenix/phoenix:latest  # Use the latest version of the Phoenix image
+    ports:
+      - "6006:6006"  # Expose port 6006 for the UI and OTLP HTTP collector
+      - "4317:4317"  # Expose port 4317 for OTLP gRPC collector
+
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
